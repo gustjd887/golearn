@@ -6,6 +6,8 @@ var x int
 var y string
 var z bool
 
+test1 :=
+
 func main () {
 
 	var test int
@@ -13,5 +15,5 @@ func main () {
 	fmt.Println(x)
 	fmt.Println(y)
 	fmt.Println(z)
-	fmt.Println(test)
+	fmt.Println(test1)
 }
