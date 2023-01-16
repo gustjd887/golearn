@@ -12,7 +12,7 @@ https://go.dev/ref/spec#Numeric_types
 작은 자료형만 선택해서 효율적으로 관리할 수 있음
 
 # int, float64
-두개만 사용할 수 있다고 함.
+두개 사용할 수 있다고 함.
 
 # uint8, int8
 uint : 부호가 없음
@@ -23,7 +23,7 @@ int : 부호가 있음
 
 # alias
 byte = uint8
-rune(문자라는 뜻) = int32 (UTF-8을 위한)
+rune(문자라는 뜻) = int32 (UTF-8을 위한 4byte)
 
 type byte로 사용 가능
 
