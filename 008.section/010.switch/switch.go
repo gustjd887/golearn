@@ -9,7 +9,7 @@ func main() {
 	// 	fmt.Println("this should not print")
 	// case (2==4):
 	// 	fmt.Println("this should not print2")
-	switch n{
+	switch n {
 	case "money", "bond", "Do No":
 		fmt.Println("money or bond or do no")
 	case "what":
