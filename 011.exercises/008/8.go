@@ -19,10 +19,11 @@ func main() {
 	// range 대신 len을 사용하면 되나???
 	// 한번 더 해보기
 
-	for i := range x {
+	for i, v1 := range x {
 		fmt.Println(i)
-		for j := range i {
-			fmt.Printf("%v\t", j)
+		for j := range v1 {
+			fmt.Printf("%v\t", v1[j])
+			// fmt.Printf("%v %v\t", j, v)
 		}
 		fmt.Println("")
 	}
