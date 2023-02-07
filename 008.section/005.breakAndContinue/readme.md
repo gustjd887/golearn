@@ -1,4 +1,4 @@
-# %(modulus)
+# %(modulo operator)
 나눈 나머지 값
 
 # break
