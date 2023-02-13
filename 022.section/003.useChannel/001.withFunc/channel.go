@@ -4,7 +4,7 @@ import "fmt"
 
 func main() {
 
-	c := make(chan int)
+	c := make(chan int) // main 함수 안에서 선언했는데, 다른 함수에서도 사용 가능한 값인가...?
 
 	// send
 	go foo(c)
