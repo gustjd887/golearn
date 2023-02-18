@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 type customErr struct {
@@ -10,20 +11,22 @@ type customErr struct {
 }
 
 func (e customErr) Error() string {
-	return fmt.Sprintf(e.msg, e.err)
+	return fmt.Sprintf("%v %v", e.msg, e.err)
 }
 
 func foo(e error) {
-	fmt.Println(e)
+	fmt.Printf("%v\n%v\n", e.(customErr).msg, e.(customErr).err)
 }
 
 func main() {
-	err := fmt.Errorf("custom err msg")
+	// err := fmt.Errorf("custom err msg")
 	// fmt.Printf("%T\n", err)
-	cs := customErr{
-		"custom err msg",
-		err,
+	_, err := os.ReadFile("no_file.txt")
+	if err != nil {
+		cs := customErr{
+			"custom error msg",
+			err,
+		}
+		foo(cs)
 	}
-
-	foo(cs)
 }
