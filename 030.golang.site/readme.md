@@ -333,3 +333,297 @@ GOROOT 환경변수는 Go 설치시 자동으로 시스템에 설정되지만, G
 패키지 내에는 함수, 구조체, 인터페이스, 메서드 등이 존재하는데, 이들의 이름(Identifier)이 첫문자를 대문자로 시작하면 이는 public 으로 사용할 수 있다. 즉, 패키지 외부에서 이들을 호출하거나 사용할 수 있게 된다. 반면, 이름이 소문자로 시작하면 이는 non-public 으로 패키지 내부에서만 사용될 수 있다.
 
 ## 패키지 init 함수와 alias
+* 패키지를 실행할 때, 처음으로 호출되는 init() 함수를 작성 가능
+* 패키지를 import하면서 단지 그 패키지 안의 init() 함수만을 호출하고자 할 때는 _을 alias로 사용하면 됨.
+```
+package main
+import _ "other/xlib"
+```
+* 패키지 이름이 동일하지만, 서로 다른 버전 혹은 서로 다른 위치에서 로딩하고자 할 때, alias를 사용
+```
+import (
+    mongo "other/mongo/db"
+    mysql "other/mysql/db"
+)
+func main() {
+    mondb := mongo.Get()
+    mydb := mysql.Get()
+    //...
+}
+```
+
+# 사용자 정의 패키지
+* 패키지 이름은 해당 폴더 이름이랑 같게 맞춰준다.
+* 모든 .go파일이 같은 패킺지 이름을 가진다.
+* 사이즈가 큰 복잡한 라이브러리의 경우, "go install" 명령을 사용하여 컴파일 시 cache할 수 있다.
+이런 방법이 빌드 시 cache를 남길 수 있는가...?
+
+# struct
+* 구조체, go의 struct는 필드들의 집합체이며, 필드들의 컨테이너
+* struct는 필드 데이타만을 가지며, 메서드를 갖지 않는다.
+* 객체지향 프로그래밍을 고유의 방식으로 지원한다. 전통적인 OOP 언어가 가지는 클래스, 객체, 상속 개념이 없다.
+* class = struct
+* 전통적인 OOP의 클래스가 필드와 메서드를 함꼐 갖는 것과 달리, go 언어의 struct는 필드만을 가지며, 메서드는 별도로 분리하여 정의한다.
+
+# interface
+메서드들의 집합체.
+
+## interface 사용
+* 함수가 파라미터로 인터페이스를 받아들이는 경우
+(직접 struct로 정의한 타입이 아니지만, method를 구현함으로서 interface를 parameter로 받아들이는 함수를 사용 가능)
+
+## empty interface
+* 메서드를 전혀 갖지 않는 빈 인터페이스, 모든 type은 적어도 0개의 인터페이스를 구현하므로, 빈 인터페이스는 모든 타입을 나타낸다.
+* 모든 타입을 담을 수 있는 공간이 되기도 한다.
+
+```
+package main
+ 
+import "fmt"
+ 
+func main() {
+    var x interface{}
+    x = 1 
+    x = "Tom"
+ 
+    printIt(x)
+}
+ 
+func printIt(v interface{}) {
+    fmt.Println(v) //Tom
+}
+```
+
+## type assertion
+```
+func main() {
+    var a interface{} = 1
+ 
+    i := a       // a와 i 는 dynamic type, 값은 1
+    j := a.(int) // j는 int 타입, 값은 1
+ 
+    println(i)  // 포인터주소 출력, 빈 인터페이스를 출력하면 주소를 출력하는 듯...
+    println(j)  // 1 출력
+}
+```
+
+# error
+* 내장 타입으로 error라는 interface 타입을 갖는다. 개발자는 이 인터페이스를 구현하는 커스텀 에러 타입을 만들 수 있다.
+```
+type error interface {
+    Error() string
+}
+```
+
+# defer
+defer 키워드는 특정 문장 혹은 함수를 나중에 실행하게 한다.(defer를 호출하는 함수가 리턴하기 직전에)
+
+# panic
+현재 함수를 즉시 멈추고 현재 함수에 defer 함수들을 모두 실행한 후 즉시 리턴한다. panic 모드 실행방식은 다시 상위함수에도 똑같이 적용되고, 계속 콜스택을 타고 올라가며 적용된다. 그리고 마지막에는 프로그램이 에러를 내고 종료하게 된다.
+
+# recover
+panic 함수에 의한 패닉상태를 다시 정상상태로 되돌리는 함수. defer로 호출되는 recover에 의해 panic이 제거되고, 콜슽택을 타고 올라가 잘못된 부분 다음을 이어서 실행한다.
+
+```
+package main
+ 
+import (
+    "fmt"
+    "os"
+)
+ 
+func main() {
+    // 잘못된 파일명을 넣음
+    openFile("Invalid.txt")
+ 
+    // recover에 의해
+    // 이 문장 실행됨
+    println("Done") 
+}
+ 
+func openFile(fn string) {
+    // defer 함수. panic 호출시 실행됨
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("OPEN ERROR", r)
+        }
+    }()
+ 
+    f, err := os.Open(fn)
+    if err != nil {
+        panic(err)
+    }
+ 
+    defer f.Close()
+}
+```
+
+# goroutine
+고루틴은 논리적(가상적) 쓰레드이다. goroutine은 비동기적으로 함수루팅을 실행하므로, 여러 코드를 동시에 실행하는 데 사용된다.
+* goroutine은 os에서 사용하는 쓰레드보다 훨씬 가볍게 비동기 처리를 구현하기 위해 만든 것으로, 기본적으로 go 런타임이 자체 관리한다.
+* go 런타임 상에서 관리되는 작업단위인 여러 goroutine들은 종종 하나의 os쓰레드 1개로도 실행되곤 한다. 즉 go루틴들은 os 쓰레드와 1대1로 대응되지 않고, multiplexing으로 훨씬 적은 os쓰레드를 사용한다.
+* 메모리 측면에서도 os 쓰레드가 1mb의 스택을 갖는 반면, goroutine은 이보다 훨씬 작은 몇 킬로바이트의 스택을 갖는다.(필요시 동적으로 증가).
+
+## 동기적 실행 , 비동기적 실행
+* goroutine들은 실행 순서가 일정하지 않으므로 프로그램 실행시 마다 다른 출력 결과를 나타낼 수 있다.
+```
+package main
+ 
+import (
+    "fmt"
+    "time"
+)
+ 
+func say(s string) {
+    for i := 0; i < 10; i++ {
+        fmt.Println(s, "***", i)
+    }
+}
+ 
+func main() {
+    // 함수를 동기적으로 실행
+    say("Sync")
+ 
+    // 함수를 비동기적으로 실행
+    go say("Async1")
+    go say("Async2")
+    go say("Async3")
+ 
+    // 3초 대기
+    time.Sleep(time.Second * 3)
+}
+```
+
+## sync.WaitGroup
+여러 go 루틴들이 끝날 때까지 기다리는 역활
+```
+package main
+ 
+import (
+    "fmt"
+    "sync"
+)
+ 
+func main() {
+    // WaitGroup 생성. 2개의 Go루틴을 기다림.
+    var wait sync.WaitGroup
+    wait.Add(2)
+ 
+    // 익명함수를 사용한 goroutine
+    go func() {
+        defer wait.Done() //끝나면 .Done() 호출
+        fmt.Println("Hello")
+    }()
+ 
+    // 익명함수에 파라미터 전달
+    go func(msg string) {
+        defer wait.Done() //끝나면 .Done() 호출
+        fmt.Println(msg)
+    }("Hi")
+ 
+    wait.Wait() //Go루틴 모두 끝날 때까지 대기
+}
+```
+
+## 다중 CPU 처리(parallel)
+* go는 디폴트로 1개의 CPU를 사용한다. 즉 여러개의 go 루틴을 만들더라도, 1개의 CPU에서 작업을 시분할하여 처리한다.
+* 머신이 복수개의 CPU를 가진 경우, 병렬처리(parallel)하기 위해서는 runtime.GOMAXPROCS 함수를 호출하여야 한다.(logical CPU)
+```
+package main
+ 
+import (
+    "runtime"  
+)
+ 
+func main() {
+    // 4개의 CPU 사용
+    runtime.GOMAXPROCS(4)
+ 
+    //...
+}
+```
+
+## 동시성(concurrent)과 병렬성(parallelism)
+처리하는 작업의 연관성에 따라 동시성과 병렬성을 구분하면 될듯.
+* 동시성 : 독립적으로 실행되는 프로세스의 구성. 한번에 많은 것을 처리하는 것.
+* 병렬성 : (관련이 있는) 계산의 동시 실행. 한번에 많은 작업을 수행하는 것.
+
+# go 채널
+데이터를 주고받는 통로. 주로 goroutine들 사이 데이터를 주고 받는데 사용된다.
+* make() 함수를 통해 미리 생성되어야 한다.
+* <- 연산자를 사용해 데이터를 주고 받는다.
+* 상대편이 준비될 때까지 채널에서 대기함으로써 별도의 lock을 걸지 않고 데이타를 동기화하는데 사용
+* 채널은 송신자와 수신자가 서로를 기다리는 속성때문에, go루틴이 끝날 때까지 기다리는 기능을 구현할 수 있다.
+
+```
+package main
+ 
+import "fmt"
+ 
+func main() {
+    done := make(chan bool)
+    go func() {
+        for i := 0; i < 10; i++ {
+            fmt.Println(i)
+        }
+        done <- true
+    }()
+ 
+    // 위의 Go루틴이 끝날 때까지 대기
+    <-done
+}
+```
+
+## 버퍼링
+go 채널은 2가지가 있는데, Unbuffered Channel과 Buffered Channel이 있다.
+* unbuffered channel은 하나의 수신자가 데이터를 받을 때까지 송신자가 데이터를 보내는 채널에 묶여있게 된다.
+* buffered chaannel은 당장 수신자가 없더라도 채널에 값을 던지고 다음으로 넘어 갈 수 있다.
+가능하면 unbuffered channel을 사용하여 구현할 것.
+
+## 송수신 전용 채널
+* (ch chan<- int) : 송신 전용 채널
+* (ch <-chan int) : 수신 전용 채널
+
+## 채널 닫기
+close(ch)로 채널을 닫을 수 있다.
+* 채널을 닫으면 해당 채널로는 더이상 송신할 수 없다.
+* 채널이 닫힌 이후로도 계쏙 수신은 가능하다.
+* 수신시 두개의 리턴값을 가지는데, 하나는 메시지, 두번째는 수신이 제대로 되었는지 나타낸다.(수신 종료시 false 리턴)
+
+## 채널 range
+채널 range문은 계속 수신하다가 채널이 닫힌 것을 감지하면 for 루프를 종료한다.
+```
+package main
+ 
+func main() {
+    ch := make(chan int, 2)
+ 
+    // 채널에 송신
+    ch <- 1
+    ch <- 2
+ 
+    // 채널을 닫는다
+    close(ch)
+ 
+    // 방법1
+    // 채널이 닫힌 것을 감지할 때까지 계속 수신
+    /*
+    for {
+        if i, success := <-ch; success {
+            println(i)
+        } else {
+            break
+        }
+    }
+    */
+ 
+    // 방법2
+    // 위 표현과 동일한 채널 range 문
+    for i := range ch {
+        println(i)
+    }
+}
+```
+
+## 채널 select문
+복수 채널들을 기다리면서 준비된 채널을 실행하는 기능을 제공한다.
